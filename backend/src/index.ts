@@ -14,6 +14,7 @@ import { Server } from 'socket.io';
 import http from 'http';
 
 import SocketServer from './sockets/sockets'
+import { LobbyController } from "./modules/lobby/lobby.controller";
 const app: Express = express();
 const server = http.createServer(app);
 
@@ -40,5 +41,5 @@ useExpressServer(app, {
         return true;
     },
     routePrefix: "/api",
-    controllers: [authController],
+    controllers: [authController,LobbyController],
 });

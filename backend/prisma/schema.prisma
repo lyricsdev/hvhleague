@@ -39,7 +39,7 @@ model Lobby {
   mode      Mode   
   finished Boolean
   map          Map?     @relation("MapToLobby", fields: [mapId], references: [id])
-  mapId        String
+  mapId        String?
   Winners String?
 }
 
