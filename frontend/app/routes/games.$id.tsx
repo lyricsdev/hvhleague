@@ -1,26 +1,10 @@
-import LobbyPlayer from '@/components/inLobbyPlayer';
-import SkeletonLobbyPlayer from '@/components/inLobbyPlayerSkeleton';
-import { useSocket } from '@/components/socketProvider';
-import { Spacer, Card, Image, CardHeader, Avatar, CardBody } from '@nextui-org/react';
-import axios from 'axios';
-import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
-import { useRouter } from 'next/router'
-import { useState, useEffect } from 'react';
-import { useAuth } from '../AuthContext';
-function serialize(obj: any) {
-    const str = JSON.stringify(obj, (_, value) =>
-        value instanceof Headers ? serializeHeaders(value) : value
-    );
-    return JSON.parse(str);
-}
-
-function serializeHeaders(headers: Headers) {
-    const obj: Record<string, string> = {};
-    headers.forEach((value, key) => {
-        obj[key] = value;
-    });
-    return obj;
-}
+import { Spacer, Card, CardHeader, Avatar, CardBody,Image } from "@nextui-org/react"
+import { LoaderFunction } from "@remix-run/node"
+import { useLoaderData } from "@remix-run/react"
+import { useState } from "react"
+import { useAxios } from "~/api/fetcher"
+import LobbyPlayer from "~/components/inLobbyPlayer"
+import SkeletonLobbyPlayer from "~/components/inLobbyPlayerSkeleton"
 interface Player {
     steamID: string
 }
@@ -31,45 +15,26 @@ interface Data {
     mode: string
     map: null
 }
-export const getServerSideProps = (async (context) => {
-    const slug = context.query.id;
-    const res = await axios.get(`http://localhost:3001/api/games/${slug}`)
-    const result : Data = res.data
+export const loader : LoaderFunction = async ({ request, params }) => {
+    const {id} = params
+    const data = await useAxios.get<Data>(`http://localhost:3001/api/games/${id}`)
     return {
-    props: {
-        result
+        game: data
     }
-   }
-}) satisfies GetServerSideProps<{result :Data}>
-
-export default function Home({
-    result,
-  }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-    if(!result) {
-        return <></>
+}
+const gameTab = () => {
+    const {game} = useLoaderData<typeof loader>() as {
+        game: Data
     }
-    const { token, isLoggedIn } = useAuth();
-    const socket = useSocket();
     const [tplayers] = useState<Player[]>([
-        ...result.tPlayers
+        ...game.tPlayers
     ])
     const [ctplayers] = useState<Player[]>([
-        ...result.ctPlayers
+        ...game.ctPlayers
     ])
 
-    useEffect(() => {
-        if (socket) {
-
-            return () => {
-
-            };
-        }
-    }, [socket]);
-
-    if (!token) return <></>
-
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="h-screen flex items-center justify-center bg-gray-100">
 
             <div className="flex hstack">
                 <div>
@@ -105,7 +70,7 @@ export default function Home({
                         </CardHeader>
                         <CardBody className="px-3 py-0">
                             <Image
-                                height={"10"}
+                                width={"750"}
                                 src='https://img.redbull.com/images/q_auto,f_auto/redbullcom/2018/06/14/ee49f42f-0a70-4811-ac42-fe8c9c7dc097/csgo-mirage-smokes'
                             />
                         </CardBody>
@@ -130,3 +95,5 @@ export default function Home({
         </div>
     );
 }
+
+export default gameTab
