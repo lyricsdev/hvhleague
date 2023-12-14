@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+model Party {
+  id       String  @id @default(uuid())
+  leader   users   @relation("PartyLeader", fields: [leaderId], references: [id])
+  leaderId String @unique
+  members  users[] @relation("PartyMembers")
+}
+
+model users {
+  id             String   @id @default(uuid())
+  password       String
+  twofactor      Boolean  @default(false)
+  steamID        String
+  email          String?
+  rank           Int      @default(1500)
+  partyLeader    Party?   @relation("PartyLeader")
+  leaderId       String?
+  partyMember    Party?   @relation("PartyMembers", fields: [memberId], references: [id])
+  memberId       String?
+
+  ctLobbies      Lobby[]  @relation("LobbyCTPlayers")
+  tLobbies       Lobby[]  @relation("LobbyTPlayers")
+}
+
+model Lobby {
+  id        String  @id @default(uuid())
+  ctPlayers    users[] @relation("LobbyCTPlayers")
+  tPlayers     users[] @relation("LobbyTPlayers")
+  mode      Mode   
+  finished Boolean
+  map          Map?     @relation("MapToLobby", fields: [mapId], references: [id])
+  mapId        String
+}
+
+enum Mode {
+  TWO_VS_TWO
+  FIVE_VS_FIVE
+}
+
+model Map {
+  id       String  @id @default(uuid())
+  name     String
+  imageUrl String
+  lobbies  Lobby[] @relation("MapToLobby")
+}
