@@ -91,11 +91,8 @@ const gameTab = () => {
                 <TeamLobby gameId={gameId} side={'t side'} mode={game.mode} players={tplayers} />
                 <div style={{ marginLeft: '15px', marginRight: '15px' }}>
                     {selectedMap && <Card className="max-w-[550px]">
-                        {/* Your existing CardHeader and CardBody components */}
                         <CardHeader className="justify-between">
-                            {/* Your existing header content */}
                             <div className="flex gap-5">
-                                {/* Your existing content */}
                                 <div className="flex flex-col gap-1 items-start justify-center">
                                     <h5 className=" ">Location</h5>
                                 </div>
@@ -111,7 +108,6 @@ const gameTab = () => {
                             </div>
                         </CardHeader>
                         <CardBody className="">
-                            {/* Your existing body content */}
                             <Image
                                 width={'750'}
                                 src={selectedMap.imageUrl}

@@ -149,7 +149,6 @@ class SocketServer {
             console.log(`Created mapVotes entry for roomId: ${roomId}`);
         }
 
-        // Check if the user has already voted for any map in the room
         const hasVotedForAnyMap = Object.values(this.mapVotes[roomId]).some(map => map.voters.includes(userId));
         if (hasVotedForAnyMap) {
             console.log(`User ${userId} has already voted in roomId: ${roomId}`);
@@ -163,7 +162,6 @@ class SocketServer {
             };
             console.log(`Initialized votes for mapId: ${mapId} in roomId: ${roomId}`);
         } else {
-            // Check if the user has already voted for this map
             if (this.mapVotes[roomId][mapId].voters.includes(userId)) {
                 console.log(`User ${userId} has already voted for mapId: ${mapId} in roomId: ${roomId}`);
                 return;
@@ -177,7 +175,6 @@ class SocketServer {
         this.io.to(roomId).emit("updateMapVotes", this.mapVotes[roomId]);
         const selectedMapId = await this.calculateAndSelectMap(roomId);
 
-        // If a map is selected, emit an event or perform the desired action
         if (selectedMapId) {
             console.log(`Selected mapId: ${selectedMapId} in roomId: ${roomId} based on votes.`);
             this.io.to(roomId).emit("mapSelected", selectedMapId);
