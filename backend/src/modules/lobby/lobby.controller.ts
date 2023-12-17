@@ -20,9 +20,9 @@ export class LobbyController {
     async gamesget(@Param('id') id: string) {
         return await this.manager.getLobby(id)
     }
-    @Get("/b/:id")
-    async ga1mesget(@Param('id') id: string) {
-        console.log("1235")
-        return await this.manager.getLobby(id)
+    @Post("/joingame/:gameId")
+    async joingame(@Param('gameId') id: string,@Body() data :any) {
+        
+        return await this.manager.joinTeam(data.gameId,"5b4f288e-629a-4638-8442-0614f88b08b9",data.side)
     }
 }

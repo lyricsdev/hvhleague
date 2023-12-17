@@ -1,99 +1,132 @@
-import { Spacer, Card, CardHeader, Avatar, CardBody,Image } from "@nextui-org/react"
-import { LoaderFunction } from "@remix-run/node"
+import { Spacer, Card, CardHeader, Avatar, CardBody, Image } from "@nextui-org/react"
+import { ActionFunction, LoaderFunction } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { Socket } from "socket.io-client"
+import { authenticator } from "~/api/auth"
 import { useAxios } from "~/api/fetcher"
-import LobbyPlayer from "~/components/inLobbyPlayer"
-import SkeletonLobbyPlayer from "~/components/inLobbyPlayerSkeleton"
-interface Player {
-    steamID: string
-}
-interface Data {
-    id: string,
-    ctPlayers: Player[],
-    tPlayers: Player[]
-    mode: string
-    map: null
-}
-export const loader : LoaderFunction = async ({ request, params }) => {
-    const {id} = params
-    const data = await useAxios.get<Data>(`http://localhost:3001/api/games/${id}`)
+import ChatBox from "~/components/chatBox"
+import MapsList, { MapVotes } from "~/components/mapsList"
+import { useSocket } from "~/components/socket"
+import TeamLobby, { Data, Player, map } from "~/components/teamcustom"
+
+export const loader: LoaderFunction = async ({ request, params }) => {
+    const { id } = params
+    const data = await useAxios.get<Data>(`/games/${id}`)
     return {
-        game: data
+        game: data,
+        gameId: id,
+        playerId: "5b4f288e-629a-4638-8442-0614f88b08b9",
+
     }
 }
-const gameTab = () => {
-    const {game} = useLoaderData<typeof loader>() as {
-        game: Data
+export const action: ActionFunction = async ({ request, context }) => {
+    const formData = await request.formData();
+    const joinGame = await formData.get("action")
+    if (joinGame) {
+        const data = JSON.parse(joinGame as string) as {
+            side: string,
+            gameId: string
+        }
+        const JoinTeam = await useAxios.post(`/games/joingame/${data.gameId}`, data)
     }
+    return {
+        dada: "dada"
+    }
+}
+
+const gameTab = () => {
+    const socket = useSocket()
+    const { game, gameId, playerId } = useLoaderData<typeof loader>() as {
+        game: Data,
+        gameId: string,
+        playerId: string,
+    }
+    const [maps, setmaps] = useState<map[]>([])
+    const [votes, setVotes] = useState<MapVotes>({})
+
+    const [selectedMap, setselectedMap] = useState<map>(game.map)
+    useEffect(() => {
+        if (!socket) return;
+        socket.emit("checkRoom", {
+            roomId: gameId,
+            playerId: playerId
+        })
+
+        socket.on("maps", (map: map[]) => {
+            setmaps(map)
+        })
+        socket.on("updateMapVotes", (maps: MapVotes) => {
+            setVotes(maps)
+        })
+        socket.on("mapSelected", (maps: map) => {
+            setselectedMap(maps)
+        })
+        return () => {
+            socket.off('checkRoom');
+            socket.off('mapSelected');
+            socket.off('updateMapVotes');
+
+        };
+    }, [socket]);
     const [tplayers] = useState<Player[]>([
         ...game.tPlayers
     ])
     const [ctplayers] = useState<Player[]>([
         ...game.ctPlayers
     ])
-
+    const getMode = () => {
+        switch (game.mode) {
+            case "TWO_VS_TWO": {
+                return "2 ПРОТИВ 2"
+            }
+            case "FIVE_VS_FIVE": {
+                return "5 ПРОТИВ 5"
+            }
+        }
+    }
     return (
         <div className="h-screen flex items-center justify-center bg-gray-100">
-
             <div className="flex hstack">
-                <div>
-                    <p>T side</p>
-
-                    {
-                        tplayers.map((it => {
-                            return <div key={it.steamID}><LobbyPlayer steamId={it.steamID} /><Spacer y={1} /> </div>
-                        }))
-                    }
-                    {tplayers.length < 5 &&
-                        Array.from({ length: 5 - tplayers.length }).map((_, index) => (
-                            <div key={index}><SkeletonLobbyPlayer /><Spacer y={1} /> </div>
-                        ))
-                    }
-                </div>
-                <div style={{
-                    marginLeft: "15px",
-                    marginRight: "15px"
-                }}>
-                    <Card className="max-w-[550px]">
+                <TeamLobby gameId={gameId} side={'t side'} mode={game.mode} players={tplayers} />
+                <div style={{ marginLeft: '15px', marginRight: '15px' }}>
+                    {selectedMap && <Card className="max-w-[550px]">
+                        {/* Your existing CardHeader and CardBody components */}
                         <CardHeader className="justify-between">
-
+                            {/* Your existing header content */}
                             <div className="flex gap-5">
+                                {/* Your existing content */}
                                 <div className="flex flex-col gap-1 items-start justify-center">
                                     <h5 className=" ">Location</h5>
                                 </div>
-                                <Avatar isBordered radius="full" size="md" src="https://upload.wikimedia.org/wikipedia/en/thumb/f/f3/Flag_of_Russia.svg/2560px-Flag_of_Russia.svg.png" />
-
+                                <Avatar
+                                    isBordered
+                                    radius="full"
+                                    size="md"
+                                    src="https://upload.wikimedia.org/wikipedia/en/thumb/f/f3/Flag_of_Russia.svg/2560px-Flag_of_Russia.svg.png"
+                                />
+                                <div className="flex flex-col gap-1 items-start justify-center">
+                                    <h5 className=" ">Режим :{getMode()}</h5>
+                                </div>
                             </div>
-
-
                         </CardHeader>
-                        <CardBody className="px-3 py-0">
+                        <CardBody className="">
+                            {/* Your existing body content */}
                             <Image
-                                width={"750"}
-                                src='https://img.redbull.com/images/q_auto,f_auto/redbullcom/2018/06/14/ee49f42f-0a70-4811-ac42-fe8c9c7dc097/csgo-mirage-smokes'
+                                width={'750'}
+                                src={selectedMap.imageUrl}
                             />
                         </CardBody>
-                    </Card>
-                </div>
-                <div>
-                    <p>CT side</p>
-
+                    </Card>}
                     {
-                        ctplayers.map((it => {
-                            return <div key={it.steamID}><LobbyPlayer steamId={it.steamID} /><Spacer y={1} /> </div>
-                        }))
-                    }
-                    {ctplayers.length < 5 &&
-                        Array.from({ length: 5 - ctplayers.length }).map((_, index) => (
-                            <div key={index}><SkeletonLobbyPlayer /><Spacer y={1} /> </div>
-                        ))
+                        !selectedMap && <MapsList maps={maps} roomId={gameId} mapVotes={votes} />
                     }
                 </div>
+                <TeamLobby gameId={gameId} side={'ct side'} mode={game.mode} players={ctplayers} />
             </div>
-
         </div>
     );
-}
+};
+
 
 export default gameTab
