@@ -1,5 +1,5 @@
 import { cssBundleHref } from "@remix-run/css-bundle";
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunction } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -7,6 +7,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
 import {NextUIProvider} from "@nextui-org/react";
 
@@ -21,12 +22,19 @@ export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
 
 ];
-
+export const Loader : LoaderFunction = ()=> {
+  const url = process.env.WEBSOCKETURL
+  return {
+    url
+  }
+}
 export default function App() {
   const [socket, setSocket] = useState<Socket>();
-
+  const {url} = useLoaderData<typeof Loader>() as {
+    url: string
+  }
   useEffect(() => {
-    const socket = io("http://localhost:3002/",{
+    const socket = io(url,{
       auth: {
         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdGVhbWlkIjoiNzY1NjExOTk0MDk5MTYwMDUiLCJpYXQiOjE3MDI4MjcxMTAsImV4cCI6MTcwMjkxMzUxMH0.fu77fyU1VHYjD_8OXZTukl5KkxVTNtAqiwVWzlFp1VY"
       }

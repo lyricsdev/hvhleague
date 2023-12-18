@@ -82,7 +82,7 @@ class AxiosService {
     }
   }
   
-const useAxios = new AxiosService("http://localhost:3001/api")
+const useAxios = new AxiosService(process.env.BASEURL)
 export { 
     useAxios
 }
