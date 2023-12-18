@@ -23,7 +23,7 @@ export default class AuthService {
           await this.register(user.steamid, user.profile);
         }
         
-        const token = jwt.sign({ steamid: user.steamid },  getConfig().JWTTOKEN, { expiresIn: '24h' });
+        const token = jwt.sign({ id: siteUser.id ,steamid: user.steamid },  getConfig().JWTTOKEN, { expiresIn: '24h' });
         console.log(token)
         return { token:token };
       };
@@ -38,7 +38,7 @@ export default class AuthService {
         if (user) {
           const compared = await comparePasswords(data.password, user.password);
           if (compared) {
-            const token = jwt.sign({ steamid: user.steamID },  getConfig().JWTTOKEN, { expiresIn: '24h' });
+            const token = jwt.sign({ id: user.id, steamid: user.steamID },  getConfig().JWTTOKEN, { expiresIn: '24h' });
             return { token };
           }
           return new wrongPassword("Password is wrong");

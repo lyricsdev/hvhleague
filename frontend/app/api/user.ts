@@ -3,8 +3,10 @@ import * as jwt from "jwt-decode"
 import { authenticator } from "./auth";
 import { useAxios } from "./fetcher";
 export interface user {
+    id: string
     steamid : string
-  }
+    
+}
 
 export interface ret {
     user: user,

@@ -5,19 +5,27 @@ import { useEffect, useState } from "react"
 import { Socket } from "socket.io-client"
 import { authenticator } from "~/api/auth"
 import { useAxios } from "~/api/fetcher"
+import { getUserSession } from "~/api/user"
 import ChatBox from "~/components/chatBox"
 import MapsList, { MapVotes } from "~/components/mapsList"
 import { useSocket } from "~/components/socket"
 import TeamLobby, { Data, Player, map } from "~/components/teamcustom"
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-    const { id } = params
-    const data = await useAxios.get<Data>(`/games/${id}`)
-    return {
-        game: data,
-        gameId: id,
-        playerId: "5b4f288e-629a-4638-8442-0614f88b08b9",
+    let user = await authenticator.isAuthenticated(request, {
+        failureRedirect: "/login",
+    });
+    if (user) {
+        let user = await getUserSession(request)
+        console.log(user)
+        const { id } = params
+        const data = await useAxios.get<Data>(`/games/${id}`)
+        return {
+            game: data,
+            gameId: id,
+            playerId: user?.user.id,
 
+        }
     }
 }
 export const action: ActionFunction = async ({ request, context }) => {

@@ -18,7 +18,7 @@ import { Socket, io } from "socket.io-client";
 import { SocketProvider } from "./components/socket";
 import { getUserSession, ret, user } from "./api/user";
 
-export const userContext = createContext<user | null>(null)
+export const userContext = createContext<user | undefined>(undefined)
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
@@ -38,13 +38,12 @@ export default function App() {
   const [socket, setSocket] = useState<Socket>();
   const {url,User} = useLoaderData<typeof loader>() as {
     url: string,
-    User: ret,
-
+    User: ret | null,
   }
   useEffect(() => {
     const socket = io(url,{
       auth: {
-        "token": User.token
+        "token": User?.token
       }
     });
     setSocket(socket);
@@ -70,7 +69,7 @@ export default function App() {
       <body>
       <NextUIProvider>
       <div className="dark text-foreground bg-background">
-      <userContext.Provider value={User.user}>
+      <userContext.Provider value={User?.user}>
 
         <Layout >
 
