@@ -15,7 +15,6 @@ interface LayoutProp {
 const Layout: React.FC<LayoutProp> = ({ children }: LayoutProp) => {
   return <div>
             {children}
-
   </div>
 }
 export default Layout

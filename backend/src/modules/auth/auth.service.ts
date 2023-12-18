@@ -25,7 +25,7 @@ export default class AuthService {
         
         const token = jwt.sign({ steamid: user.steamid },  getConfig().JWTTOKEN, { expiresIn: '24h' });
         console.log(token)
-        return { token };
+        return { token:token };
       };
     register = async (steamid: string, profileurl: string) => {
         await this.userService.createUserSteam({ steamid, profileurl });

@@ -27,8 +27,12 @@ export class authController {
     }
     @Get("/steam/authenticate")
     async steamAuthenticate(@Req() request : Request) {
-        const user = await this.AuthService.authorize(request)
-        return user
+        try {
+            const user = await this.AuthService.authorize(request)
+            return user
+        } catch (error) {
+            return {error: "something wrong"}
+        }
     }
     @Post("/authenticate")
     async authenticate(@Body() body: authenticateDto) {

@@ -1,5 +1,5 @@
 import { cssBundleHref } from "@remix-run/css-bundle";
-import type { LinksFunction, LoaderFunction } from "@remix-run/node";
+import { json, type LinksFunction, type LoaderFunction } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -13,9 +13,12 @@ import {NextUIProvider} from "@nextui-org/react";
 
 import stylesheet from "~/base.css";
 import Layout from "./layout/main.layout";
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext } from "react";
 import { Socket, io } from "socket.io-client";
 import { SocketProvider } from "./components/socket";
+import { getUserSession, ret, user } from "./api/user";
+
+export const userContext = createContext<user | null>(null)
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
@@ -24,20 +27,24 @@ export const links: LinksFunction = () => [
 ];
 export const loader: LoaderFunction = async ({ request, params }) => {
   const url = process.env.WEBSOCKETURL
-  console.log(process.env.BASEURL)
+  let data = await getUserSession(request)
+  
   return {
-    url
+    url,
+    User: data
   }
 }
 export default function App() {
   const [socket, setSocket] = useState<Socket>();
-  const {url} = useLoaderData<typeof loader>() as {
-    url: string
+  const {url,User} = useLoaderData<typeof loader>() as {
+    url: string,
+    User: ret,
+
   }
   useEffect(() => {
-    const socket = io("http://localhost:3002/",{
+    const socket = io(url,{
       auth: {
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdGVhbWlkIjoiNzY1NjExOTk0MDk5MTYwMDUiLCJpYXQiOjE3MDI4MjcxMTAsImV4cCI6MTcwMjkxMzUxMH0.fu77fyU1VHYjD_8OXZTukl5KkxVTNtAqiwVWzlFp1VY"
+        "token": User.token
       }
     });
     setSocket(socket);
@@ -63,11 +70,17 @@ export default function App() {
       <body>
       <NextUIProvider>
       <div className="dark text-foreground bg-background">
+      <userContext.Provider value={User.user}>
+
         <Layout >
+
         <SocketProvider socket={socket}>
           <Outlet />
         </SocketProvider>
+
         </Layout>
+        </userContext.Provider>
+
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
