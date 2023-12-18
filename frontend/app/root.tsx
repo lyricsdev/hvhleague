@@ -22,19 +22,20 @@ export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
 
 ];
-export const Loader : LoaderFunction = ()=> {
+export const loader: LoaderFunction = async ({ request, params }) => {
   const url = process.env.WEBSOCKETURL
+  console.log(process.env.BASEURL)
   return {
     url
   }
 }
 export default function App() {
   const [socket, setSocket] = useState<Socket>();
-  const {url} = useLoaderData<typeof Loader>() as {
+  const {url} = useLoaderData<typeof loader>() as {
     url: string
   }
   useEffect(() => {
-    const socket = io(url,{
+    const socket = io("http://localhost:3002/",{
       auth: {
         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdGVhbWlkIjoiNzY1NjExOTk0MDk5MTYwMDUiLCJpYXQiOjE3MDI4MjcxMTAsImV4cCI6MTcwMjkxMzUxMH0.fu77fyU1VHYjD_8OXZTukl5KkxVTNtAqiwVWzlFp1VY"
       }
