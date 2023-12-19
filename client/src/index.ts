@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 type Location = "eu" | "ru" | "us"
 type ServerStatus = "offline" | "online" | "inGame" | "waitingForPlayers"
 interface clientInfo {
+    type: string,
     servername: string
     location: Location
     ip: string
@@ -10,6 +11,7 @@ interface clientInfo {
     status: ServerStatus
 }
 let newInformation : clientInfo = {
+    type: "serverCS",
     servername: "test1",
     location: "eu",
     ip: "127.0.0.1",
@@ -24,7 +26,7 @@ const generateAuthToken = (generate: boolean = false)=> {
 const serverToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXJ2ZXJuYW1lIjoidGVzdDEiLCJsb2NhdGlvbiI6ImV1IiwiaXAiOiIxMjcuMC4wLjEiLCJwb3J0IjoiMjcwMTUiLCJzdGF0dXMiOiJvbmxpbmUiLCJpYXQiOjE3MDMwMDg3NjQsImV4cCI6MTcwMzA5NTE2NH0.BGS97e90XKqzJadayW89Zg1p60NGNG3r4unn38u7PRg"
 const socket: Socket = io("http://localhost:3002",{
     auth: {
-        "serverAuth": serverToken
+        "token": serverToken
     }
 });
 socket.on('connect', ()=>{

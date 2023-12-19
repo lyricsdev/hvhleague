@@ -45,7 +45,7 @@ class SocketServer {
     private io: Server;
     private lobbyManager: lobbyManager
     private mapVotes: MapVotes = {};
-    private csServers : ServersCS = {}
+    private csServers: ServersCS = {}
     constructor(server: http.Server) {
         this.lobbyManager = new lobbyManager()
         this.io = new Server(server, {
@@ -120,14 +120,14 @@ class SocketServer {
         if (lobby) {
             const totalVotes = Object.values(this.mapVotes[roomId]).reduce((sum, map) => sum + map.votes, 0);
 
-            const threshold = lobby.mode === "TWO_VS_TWO"  ? 4 : 10;
+            const threshold = lobby.mode === "TWO_VS_TWO" ? 4 : 10;
             if (totalVotes >= 1) {
                 const mapVotesArray = Object.entries(this.mapVotes[roomId]);
-        
+
                 mapVotesArray.sort(([, map1], [, map2]) => map2.votes - map1.votes);
-        
+
                 const highestVotes = mapVotesArray[0][1].votes;
-        
+
                 const highestVotedMaps = mapVotesArray.filter(([, map]) => map.votes === highestVotes);
                 console.log(highestVotes)
                 if (highestVotedMaps.length === 1) {
@@ -140,7 +140,7 @@ class SocketServer {
                     })
                     return map;
                 }
-        
+
                 const randomMapIndex = Math.floor(Math.random() * highestVotedMaps.length);
                 const randomMapId = highestVotedMaps[randomMapIndex][0];
                 console.log(`Selected mapId: ${randomMapId} in roomId: ${roomId} randomly from highest voted maps.`);
@@ -151,7 +151,7 @@ class SocketServer {
                 })
                 return map;
             }
-            
+
         }
         return null
     }
@@ -214,7 +214,7 @@ class SocketServer {
                 socket.disconnect(true);
                 return;
             }
-    
+
             const servername = decoded.servername;
             console.log(decoded)
             this.csServers[servername] = {
@@ -225,19 +225,19 @@ class SocketServer {
                 lastPingTimestamp: Date.now(),
                 socket: socket
             };
-    
+
             console.log(`Server ${servername} authenticated at Location ${decoded.location}`);
-            this.io.on("changeStatus",(data:any)=> {
+            this.io.on("changeStatus", (data: any) => {
                 console.log("????")
                 this.csServers[servername].lastPingTimestamp = Date.now()
                 console.log(`old status: ${this.csServers[servername].status} new: ${data.status} `)
                 this.csServers[servername].status = data.status
             })
-    
+
             socket.on("disconnect", () => {
                 this.handleDisconnect(servername);
             });
-    
+
         });
     }
     private pingConnectedServers(): void {
@@ -264,28 +264,36 @@ class SocketServer {
 
         this.io.on('connection', (socket: Socket) => {
             const token = socket.handshake.auth;
-            if (token["serverAuth"]) {
-                this.handleServerConnection(token, socket);
-            }
+
             if (token['token']) {
                 console.log('Unauthorized access. No JWT token provided.');
                 jwt.verify(token['token'], getConfig().JWTTOKEN, (err: any, decoded: any) => {
                     if (err) {
                         console.log('Invalid JWT token.');
                         socket.disconnect(true);
+
                         return;
                     }
-    
-                    console.log('User authenticated:', decoded.steamid);
-                    socket.on("checkRoom", async (data: checkRoomI) => {
-                        this.handleCheckRoom(data, socket)
-                        
-                    })
-                    socket.on("voteMap", async (data: voteMap) => {
-                       await this.updateMapVotes(data.roomId, data.mapId, decoded.steamid);
-                    });
-                });   
+                    if (decoded.type) {
+                        switch (decoded.type) {
+                            case "serverCs": {
+                                this.handleServerConnection(token, socket);
+                            } break;
+                        }
+                    } else {
+                        console.log('User authenticated:', decoded.steamid);
+                        socket.on("checkRoom", async (data: checkRoomI) => {
+                            this.handleCheckRoom(data, socket)
+
+                        })
+                        socket.on("voteMap", async (data: voteMap) => {
+                            await this.updateMapVotes(data.roomId, data.mapId, decoded.steamid);
+                        });
+                    }
+                });
             }
+            socket.disconnect(true);
+
             return
         });
     }
