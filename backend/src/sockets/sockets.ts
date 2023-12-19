@@ -25,7 +25,18 @@ interface MapVotes {
         };
     };
 }
-
+type Location = "eu" | "ru" | "us"
+type ServerStatus = "offline" | "online" | "inGame" | "waitingForPlayers"
+interface ServersCS {
+    [servername: string]: {
+        location: Location
+        ip: string
+        port: string
+        status: ServerStatus,
+        lastPingTimestamp: number
+        socket: Socket
+    };
+}
 interface voteMap {
     roomId: string
     mapId: string
@@ -34,6 +45,7 @@ class SocketServer {
     private io: Server;
     private lobbyManager: lobbyManager
     private mapVotes: MapVotes = {};
+    private csServers : ServersCS = {}
     constructor(server: http.Server) {
         this.lobbyManager = new lobbyManager()
         this.io = new Server(server, {
@@ -192,35 +204,89 @@ class SocketServer {
             })
         }
     }
-
-
-    private configure(): void {
-        this.io.on('connection', (socket: Socket) => {
-            const token = socket.handshake.auth;
-            console.log(token)
-            if (!token['token']) {
-                console.log('Unauthorized access. No JWT token provided.');
+    private handleServerConnection(token: any, socket: Socket): void {
+        setInterval(() => {
+            this.pingConnectedServers();
+        }, 5000);
+        jwt.verify(token['serverAuth'], getConfig().JWTTOKEN, (err: any, decoded: any) => {
+            if (err) {
+                console.log('Invalid JWT token.');
                 socket.disconnect(true);
                 return;
             }
-
-            jwt.verify(token['token'], getConfig().JWTTOKEN, (err: any, decoded: any) => {
-                if (err) {
-                    console.log('Invalid JWT token.');
-                    socket.disconnect(true);
-                    return;
-                }
-
-                console.log('User authenticated:', decoded.steamid);
-                socket.on("checkRoom", async (data: checkRoomI) => {
-                    this.handleCheckRoom(data, socket)
-                    
-                })
-                socket.on("voteMap", async (data: voteMap) => {
-                   await this.updateMapVotes(data.roomId, data.mapId, decoded.steamid);
-                });
+    
+            const servername = decoded.servername;
+            console.log(decoded)
+            this.csServers[servername] = {
+                location: decoded.location,
+                ip: decoded.ip,
+                port: decoded.port,
+                status: decoded.status,
+                lastPingTimestamp: Date.now(),
+                socket: socket
+            };
+    
+            console.log(`Server ${servername} authenticated at Location ${decoded.location}`);
+            this.io.on("changeStatus",(data:any)=> {
+                console.log("????")
+                this.csServers[servername].lastPingTimestamp = Date.now()
+                console.log(`old status: ${this.csServers[servername].status} new: ${data.status} `)
+                this.csServers[servername].status = data.status
+            })
+    
+            socket.on("disconnect", () => {
+                this.handleDisconnect(servername);
             });
+    
+        });
+    }
+    private pingConnectedServers(): void {
+        const currentTimestamp = Date.now();
+        for (const servername in this.csServers) {
+            const server = this.csServers[servername];
+            const timeSinceLastPing = currentTimestamp - server.lastPingTimestamp;
+            if (timeSinceLastPing > 60000) {
+                this.csServers[servername].socket.disconnect()
+                delete this.csServers[servername];
+                console.log(`Server ${servername} removed due to lack of response.`);
+            } else {
+                this.csServers[servername].socket.emit('serverStatus', {});
+            }
+        }
+    }
+    private handleDisconnect(servername: string): void {
+        if (this.csServers[servername]) {
+            delete this.csServers[servername];
+            console.log(`Server ${servername} disconnected.`);
+        }
+    }
+    private configure(): void {
 
+        this.io.on('connection', (socket: Socket) => {
+            const token = socket.handshake.auth;
+            if (token["serverAuth"]) {
+                this.handleServerConnection(token, socket);
+            }
+            if (token['token']) {
+                console.log('Unauthorized access. No JWT token provided.');
+                jwt.verify(token['token'], getConfig().JWTTOKEN, (err: any, decoded: any) => {
+                    if (err) {
+                        console.log('Invalid JWT token.');
+                        socket.disconnect(true);
+                        return;
+                    }
+    
+                    console.log('User authenticated:', decoded.steamid);
+                    socket.on("checkRoom", async (data: checkRoomI) => {
+                        this.handleCheckRoom(data, socket)
+                        
+                    })
+                    socket.on("voteMap", async (data: voteMap) => {
+                       await this.updateMapVotes(data.roomId, data.mapId, decoded.steamid);
+                    });
+                });   
+            }
+            return
         });
     }
 }
