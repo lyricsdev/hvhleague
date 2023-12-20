@@ -15,6 +15,7 @@ export const meta: MetaFunction = () => {
     { name: "description", content: "Welcome to Remix!" },
   ];
 };
+import test from './../assets/test.svg'
 export const loader: LoaderFunction = async ({ request }) => {
   let user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
@@ -68,8 +69,13 @@ export default function Index() {
       <p>party members</p>
       {
         members && members.map((it) => {
-          return <Avatar isBordered radius="none" src={it.avatar ? it.avatar : "" } />
+          return <Avatar radius="none" src={it.avatar ? it.avatar : ""} />
         })
+      }
+      {members && members.length < 5 &&
+        Array.from({ length: 5 - members.length }).map((_, index) => (
+          <div key={index}><Avatar radius="none" src={test} /> </div>
+        ))
       }
     </div>
   );

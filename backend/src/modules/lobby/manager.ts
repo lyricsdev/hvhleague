@@ -239,8 +239,16 @@ export default class LobbyManager {
                                 });
                                 if(partymemebers?.partyLeader?.members) {
                                     const members = partymemebers.partyLeader.members
-                                    countLobbyCt < maxPlayersPerTeam
-                                    if(countLobbyCt + members.length - 1 <= maxPlayersPerTeam) {
+                                    const countLobbyCt = await prisma.users.count({
+                                        where: {
+                                            ctLobbies: {
+                                                some: {
+                                                    id: gameId
+                                                }
+                                            }
+                                        }
+                                    });
+                                    if(countLobbyCt + members.length <= maxPlayersPerTeam) {
                                         for(const user of members) {
                                             await prisma.users.update({
                                                 where: {
@@ -355,8 +363,19 @@ export default class LobbyManager {
                                 });
                                 if(partymemebers?.partyLeader?.members) {
                                     const members = partymemebers.partyLeader.members
-                                    countLobbyCt < maxPlayersPerTeam
-                                    if(countLobbyCt + members.length - 1 <= maxPlayersPerTeam) {
+                                    const countLobbyCt = await prisma.users.count({
+                                        where: {
+                                            tLobbies: {
+                                                some: {
+                                                    id: gameId
+                                                }
+                                            }
+                                        }
+                                    });
+            
+                                    console.log(`countLobbyCt ${countLobbyCt} members.length ${members.length} maxPlayersPerTeam ${maxPlayersPerTeam}`)
+                                    
+                                    if(countLobbyCt + members.length <= maxPlayersPerTeam) {
                                         for(const user of members) {
                                             await prisma.users.update({
                                                 where: {
