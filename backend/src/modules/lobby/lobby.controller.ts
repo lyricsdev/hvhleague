@@ -36,6 +36,8 @@ export class LobbyController {
     }
     @Get("/partymembers")
     async getPartymembers() {
-        return await this.manager.getPartyMembers("5b4f288e-629a-4638-8442-0614f88b08b9")
+       const data = await this.manager.getPartyMembers("5b4f288e-629a-4638-8442-0614f88b08b9")
+       console.log(data)
+       return data
     }
 }

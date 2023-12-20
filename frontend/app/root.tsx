@@ -28,7 +28,7 @@ export const links: LinksFunction = () => [
 export const loader: LoaderFunction = async ({ request, params }) => {
   const url = process.env.WEBSOCKETURL
   let data = await getUserSession(request)
-  
+
   return {
     url,
     User: data

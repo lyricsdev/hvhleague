@@ -1,21 +1,37 @@
 import { Button, Image } from "@nextui-org/react";
-import { redirect, type ActionFunction, type MetaFunction } from "@remix-run/node";
+import { redirect, type ActionFunction, type MetaFunction, LoaderFunction } from "@remix-run/node";
 import { Form } from "@remix-run/react";
 import { SteamIcon } from "~/components/steamicon";
 import svg from './../assets/steam.svg'
 import { useAxios } from "~/api/fetcher";
 import { userContext } from "~/root";
 import { useContext } from "react";
+import { authenticator } from "~/api/auth";
+import { getUserSession } from "~/api/user";
+import { Player } from "~/components/teamcustom";
 export const meta: MetaFunction = () => {
   return [
     { title: "New Remix App" },
     { name: "description", content: "Welcome to Remix!" },
   ];
 };
-export const  action : ActionFunction = async({ request, context }) => {
+export const loader: LoaderFunction = async ({ request }) => {
+  let user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+  if (user) {
+    let decoded = await getUserSession(request)
+    if(decoded) {
+      const members = await useAxios.get("/games/partymembers").catch((e)=>console.log(e))
+      console.log(members)
+      return {}
+    }
+
+  }
+}
+export const action: ActionFunction = async ({ request, context }) => {
   const form = await request.formData()
   const action = await form.get("action")
-  console.log(action)
   switch (action) {
     case "steamauth": {
       const getauth = await useAxios.get<any>("/auth/steam")
@@ -32,17 +48,17 @@ export default function Index() {
   return (
     <div className="flex gap-4 items-center">
       <Form method="post">
-      <Button isIconOnly color="warning" variant="faded" aria-label="Take a photo"
-      type="submit" name="action" value={"steamauth"}
-      > <Image
-        alt="nextui logo"
-        height={40}
-        radius="sm"
-        src={svg}
-        width={40}
-        style={{ paddingRight: '5px' }}
+        <Button isIconOnly color="warning" variant="faded" aria-label="Take a photo"
+          type="submit" name="action" value={"steamauth"}
+        > <Image
+            alt="nextui logo"
+            height={40}
+            radius="sm"
+            src={svg}
+            width={40}
+            style={{ paddingRight: '5px' }}
 
-      /></Button>
+          /></Button>
       </Form>
       {user?.steamid}
     </div>

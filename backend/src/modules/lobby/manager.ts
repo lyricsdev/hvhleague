@@ -49,7 +49,11 @@ export default class LobbyManager {
                 }
             }
         })
-        return await user?.partyLeader?.members
+        console.log(user)
+        if(user?.partyLeader) {
+            return user.partyLeader.members
+        }
+        return null
     }
     leaveFromLobby = async(playerId: string,gameId: string)=> {
         const lobby = await prisma.lobby.findFirst({
@@ -105,28 +109,25 @@ export default class LobbyManager {
                     })
                 }
 
-                const countLobbyCt = await prisma.users.count({
+                const lobbyPlayers = await prisma.lobby.findFirst({
                     where: {
-                        ctLobbies: {
-                            some: {
-                                id: gameId
-                            }
-                        },
-                        tLobbies: {
-                            some: {
-                                id: gameId
-                            }
-                        }
+                        id: gameId,
+                    },
+                    select: {
+                        tPlayers: true,
+                        ctPlayers: true
                     }
                 });
-                if(countLobbyCt == 0) {
-                    await prisma.lobby.delete({
-                        where: {
-                            id: gameId
-                        }
-                    })
+                if(lobbyPlayers) {
+                    const count = lobbyPlayers?.ctPlayers.length + lobbyPlayers?.tPlayers.length
+                    if(count <= 0) {
+                        await prisma.lobby.delete({
+                            where: {
+                                id: gameId
+                            }
+                        })
+                    }
                 }
-
             }
         }
     }
@@ -204,7 +205,18 @@ export default class LobbyManager {
                                         id: true,
                                         partyLeader: {
                                             select: {
-                                                members: true
+                                                members: {
+                                                    where: {
+                                                        AND: [
+                                                            {
+                                                                OR: [
+                                                                    { ctLobbies: { none: { id: gameId } } },
+                                                                    { ctLobbies: { some: { finished: true } } } 
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -309,7 +321,18 @@ export default class LobbyManager {
                                         id: true,
                                         partyLeader: {
                                             select: {
-                                                members: true
+                                                members: {
+                                                    where: {
+                                                        AND: [
+                                                            {
+                                                                OR: [
+                                                                    { ctLobbies: { none: { id: gameId } } },
+                                                                    { ctLobbies: { some: { finished: true } } } 
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -341,16 +364,16 @@ export default class LobbyManager {
                                                     id: user.id
                                                 },
                                                 data: {
-                                                    ctLobbies: {
+                                                    tLobbies: {
                                                         connect: {
                                                             id: gameId
                                                         }
                                                     },
-                                                    tLobbies: {
+                                                    ctLobbies: {
                                                         disconnect: {
                                                             id: gameId
                                                         }
-                                                    },
+                                                    }
                                                 }
                                             });
                                         }
