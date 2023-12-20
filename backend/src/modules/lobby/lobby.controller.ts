@@ -34,7 +34,7 @@ export class LobbyController {
     async leaveLobby(@Body() data : { gameId: string} ) {
         return await this.manager.leaveFromLobby("5b4f288e-629a-4638-8442-0614f88b08b9",data.gameId)
     }
-    @Get("/partymembers")
+    @Post("/partymembers")
     async getPartymembers() {
        const data = await this.manager.getPartyMembers("5b4f288e-629a-4638-8442-0614f88b08b9")
        console.log(data)

@@ -21,6 +21,7 @@ model users {
   password       String
   twofactor      Boolean  @default(false)
   steamID        String
+  avatar String?
   email          String?
   rank           Int      @default(1500)
   partyLeader    Party?   @relation("PartyLeader")

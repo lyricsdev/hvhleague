@@ -8,7 +8,6 @@ export default class userService {
     const user = await this.findUserBySteamId(register.steamid)
     if (!user) {
       const password = generateRandomPassword(10)
-      console.log(password)
       await prisma.users.create({
         data: {
           steamID: register.steamid,

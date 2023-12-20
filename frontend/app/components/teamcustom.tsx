@@ -5,6 +5,7 @@ import SkeletonLobbyPlayer from "./inLobbyPlayerSkeleton"
 export interface Player {
     id: string
     steamID: string
+    avatar: string | null
 }
 export interface map {
     id: string,
@@ -56,7 +57,7 @@ const TeamLobby: React.FC<propTeam> = ({players,side,gameId,mode }) => {
             }}>{side} {mode}</p>
             {
                 players.map((it => {
-                    return <div key={it.steamID}><LobbyPlayer steamId={it.steamID} /><Spacer y={1} /> </div>
+                    return <div key={it.steamID}><LobbyPlayer avatar={it.avatar} steamId={it.steamID} /><Spacer y={1} /> </div>
                 }))
             }
             {

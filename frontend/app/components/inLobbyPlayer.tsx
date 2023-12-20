@@ -2,9 +2,10 @@
 import { Card, CardBody, Image } from "@nextui-org/react";
 interface PlayerProps {
     steamId: string
+    avatar : string | null
 }
 import image from './../assets/SeasonalRankTop0.png'
-const LobbyPlayer: React.FC<PlayerProps> = ({ steamId }) => {
+const LobbyPlayer: React.FC<PlayerProps> = ({ steamId,avatar }) => {
 
     return (
         <Card>
@@ -14,7 +15,7 @@ const LobbyPlayer: React.FC<PlayerProps> = ({ steamId }) => {
                         alt="nextui logo"
                         height={40}
                         radius="sm"
-                        src={image}
+                        src={avatar ? avatar : image}
                         width={40}
                         style={{ paddingRight: '5px'}}
                     />

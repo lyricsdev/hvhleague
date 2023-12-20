@@ -20,6 +20,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         console.log(user)
         const { id } = params
         const data = await useAxios.get<Data>(`/games/${id}`)
+        console.log(data)
         if(data)
         return {
             game: data,

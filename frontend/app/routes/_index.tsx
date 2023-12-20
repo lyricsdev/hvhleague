@@ -1,6 +1,6 @@
-import { Button, Image } from "@nextui-org/react";
+import { Avatar, Button, Image } from "@nextui-org/react";
 import { redirect, type ActionFunction, type MetaFunction, LoaderFunction } from "@remix-run/node";
-import { Form } from "@remix-run/react";
+import { Form, useLoaderData } from "@remix-run/react";
 import { SteamIcon } from "~/components/steamicon";
 import svg from './../assets/steam.svg'
 import { useAxios } from "~/api/fetcher";
@@ -21,10 +21,11 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
   if (user) {
     let decoded = await getUserSession(request)
-    if(decoded) {
-      const members = await useAxios.get("/games/partymembers").catch((e)=>console.log(e))
-      console.log(members)
-      return {}
+    if (decoded) {
+      const members = await useAxios.post<Player[] | null>("/games/partymembers", {})
+      return {
+        members
+      }
     }
 
   }
@@ -45,6 +46,9 @@ export const action: ActionFunction = async ({ request, context }) => {
 }
 export default function Index() {
   const user = useContext(userContext)
+  const { members } = useLoaderData<typeof loader>() as {
+    members: Player[] | null
+  }
   return (
     <div className="flex gap-4 items-center">
       <Form method="post">
@@ -61,6 +65,12 @@ export default function Index() {
           /></Button>
       </Form>
       {user?.steamid}
+      <p>party members</p>
+      {
+        members && members.map((it) => {
+          return <Avatar isBordered radius="none" src={it.avatar ? it.avatar : "" } />
+        })
+      }
     </div>
   );
 }

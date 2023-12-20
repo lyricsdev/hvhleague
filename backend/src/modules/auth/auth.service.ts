@@ -18,17 +18,16 @@ export default class AuthService {
     authorize = async (request: Request) => {
         const user = await steam.authenticate(request);
         const siteUser = await this.userService.findUserBySteamId(user.steamid);
-        
         if (!siteUser) {
-          await this.register(user.steamid, user.profile);
+          await this.register(user.steamid, user.profile,user.avatar.medium);
         }
         
         const token = jwt.sign({ id: siteUser.id ,steamid: user.steamid },  getConfig().JWTTOKEN, { expiresIn: '24h' });
         console.log(token)
         return { token:token };
       };
-    register = async (steamid: string, profileurl: string) => {
-        await this.userService.createUserSteam({ steamid, profileurl });
+      register = async (steamid: string, profileurl: string,avatar : string) => {
+        await this.userService.createUserSteam({ steamid, profileurl,avatar });
     
         const token = jwt.sign({ steamid },  getConfig().JWTTOKEN, { expiresIn: '24h' });
         return { token };

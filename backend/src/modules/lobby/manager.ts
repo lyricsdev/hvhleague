@@ -5,11 +5,6 @@ import { createLobby } from './dto/createLobby.dto';
 import prisma from '../prisma/prisma.client';
 import { Mode } from '@prisma/client';
 
-interface RankQueueItem {
-    socket: Socket;
-    rank: number;
-    steamid: string;
-}
 
 export default class LobbyManager {
     private userService: userService;
@@ -42,18 +37,20 @@ export default class LobbyManager {
                         members: {
                             select: {
                                 id: true,
-                                steamID: true
+                                steamID: true,
+                                avatar: true
                             }
                         }
                     }
                 }
             }
         })
-        console.log(user)
         if(user?.partyLeader) {
-            return user.partyLeader.members
+            const members = user?.partyLeader.members
+            return members
         }
-        return null
+        
+        return null;
     }
     leaveFromLobby = async(playerId: string,gameId: string)=> {
         const lobby = await prisma.lobby.findFirst({
@@ -142,14 +139,16 @@ export default class LobbyManager {
                 ctPlayers: {
                     select: {
                         id: true,
-                        steamID: true
+                        steamID: true,
+                        avatar: true
                     }
                 },
                 tPlayers: {
                     select: {
                         id: true,
 
-                        steamID: true
+                        steamID: true,
+                        avatar: true
                     }
                 },
                 mode: true,
