@@ -1,6 +1,6 @@
-import { Spacer, Card, CardHeader, Avatar, CardBody, Image } from "@nextui-org/react"
-import { ActionFunction, LoaderFunction } from "@remix-run/node"
-import { useLoaderData } from "@remix-run/react"
+import { Spacer, Card, CardHeader, Avatar, CardBody, Image, Button } from "@nextui-org/react"
+import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node"
+import { Form, useLoaderData } from "@remix-run/react"
 import { useEffect, useState } from "react"
 import { Socket } from "socket.io-client"
 import { authenticator } from "~/api/auth"
@@ -20,23 +20,34 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         console.log(user)
         const { id } = params
         const data = await useAxios.get<Data>(`/games/${id}`)
+        if(data)
         return {
             game: data,
             gameId: id,
             playerId: user?.user.id,
 
         }
+        return redirect("/")
     }
 }
 export const action: ActionFunction = async ({ request, context }) => {
     const formData = await request.formData();
     const joinGame = await formData.get("action")
-    if (joinGame) {
-        const data = JSON.parse(joinGame as string) as {
+    const joinLobby = await formData.get("joinLobby")
+    if (joinLobby) {
+        const data = JSON.parse(joinLobby as string) as {
             side: string,
             gameId: string
         }
         const JoinTeam = await useAxios.post(`/games/joingame/${data.gameId}`, data)
+    }
+    switch(joinGame) {
+        case "leaveLobby": {
+            const gameId = await formData.get("gameId")
+            const leave = await useAxios.post(`/games/leaveLobby`, {gameId})
+            return await redirect("/game")
+        }break;
+       
     }
     return {
         dada: "dada"
@@ -83,6 +94,12 @@ const gameTab = () => {
     const [ctplayers] = useState<Player[]>([
         ...game.ctPlayers
     ])
+    const isPlayerInLobby = () => {
+        const check = [...ctplayers, ...tplayers].some((it) => {
+            return it.id === playerId
+        });
+        return check;
+      };
     const getMode = () => {
         switch (game.mode) {
             case "TWO_VS_TWO": {
@@ -97,6 +114,15 @@ const gameTab = () => {
         <div className="h-screen flex items-center justify-center bg-gray-100">
             <div className="flex hstack">
                 <TeamLobby gameId={gameId} side={'t side'} mode={game.mode} players={tplayers} />
+                {
+                    isPlayerInLobby() && <Form method="post">
+                              <input style={{
+                                display: "none"
+                              }} name="gameId" defaultValue={gameId} type="text" />
+
+                        <Button type="submit" value="leaveLobby" name="action">Ливаем емае</Button>
+                    </Form>
+                }
                 <div style={{ marginLeft: '15px', marginRight: '15px' }}>
                     {selectedMap && <Card className="max-w-[550px]">
                         <CardHeader className="justify-between">

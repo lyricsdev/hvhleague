@@ -71,10 +71,118 @@ export default class userService {
             id: gameId
           }
         }
+      },
+      select: {
+        id: true,
+        partyLeader: {
+          select: {
+            members: true
+          }
+        }
       }
     })
+    if (usr.partyLeader) {
+      for (const users of usr.partyLeader.members) {
+        await prisma.users.update({
+          where: {
+            id: users.id
+          },
+          data: {
+            tLobbies: {
+              connect: {
+                id: gameId
+              }
+            }
+          },
+        })
+      }
+    }
     return {
       success: true
+    }
+  }
+  leaveLobby = async(userId: string,gameId: string)=> {
+    const usr = await prisma.users.update({
+      where: {
+        id: userId
+      },
+      data: {
+        ctLobbies: {
+          disconnect: {
+            id: gameId
+          }
+        },
+        tLobbies: {
+            disconnect: {
+              id: gameId
+            }
+        }
+      },
+      select: {
+        id: true,
+        partyLeader: {
+          select: {
+            id: true,
+            members: true
+          }
+        }
+      }
+    })
+    if(usr.partyLeader?.members) {
+      for (const users of usr.partyLeader.members) {
+        await prisma.users.update({
+          where: {
+            id: users.id
+          },
+          data: {
+            ctLobbies: {
+              disconnect: {
+                id: gameId
+              }
+            },
+            tLobbies: {
+                disconnect: {
+                  id: gameId
+                }
+            }
+          },
+        })
+      }
+    }
+  }
+  dissassembleParty = async (userId: string) => {
+    const usr = await prisma.users.update({
+      where: {
+        id: userId
+      },
+      data: {
+        partyLeader: {
+          disconnect: true
+        }
+      },
+      select: {
+        id: true,
+        partyLeader: {
+          select: {
+            id: true,
+            members: true
+          }
+        }
+      }
+    })
+    if(usr.partyLeader?.members) {
+      for (const users of usr.partyLeader.members) {
+        await prisma.users.update({
+          where: {
+            id: users.id
+          },
+          data: {
+            partyMember: {
+              disconnect: true
+            }
+          },
+        })
+      }
     }
   }
   switchTeam = async (userId: string, lobbyId: string) => {

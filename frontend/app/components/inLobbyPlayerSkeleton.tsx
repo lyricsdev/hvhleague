@@ -11,7 +11,7 @@ const SkeletonLobbyPlayer: React.FC<props> = ({side,gameId}) => {
             <CardBody>
                 <Form method="POST" reloadDocument>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <button type="submit" name="action" value={JSON.stringify({
+                        <button type="submit" name="joinLobby" value={JSON.stringify({
                             gameId: gameId,
                             side: side
                         })} className="flex rounded-full w-5 h-10 pr-5">

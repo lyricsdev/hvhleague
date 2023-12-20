@@ -3,6 +3,7 @@ import LobbyPlayer from "./inLobbyPlayer"
 import SkeletonLobbyPlayer from "./inLobbyPlayerSkeleton"
 
 export interface Player {
+    id: string
     steamID: string
 }
 export interface map {

@@ -266,7 +266,6 @@ class SocketServer {
             const token = socket.handshake.auth;
 
             if (token['token']) {
-                console.log('Unauthorized access. No JWT token provided.');
                 jwt.verify(token['token'], getConfig().JWTTOKEN, (err: any, decoded: any) => {
                     if (err) {
                         console.log('Invalid JWT token.');

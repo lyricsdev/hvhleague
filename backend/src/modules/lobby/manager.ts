@@ -25,8 +25,109 @@ export default class LobbyManager {
             }
         })
         await this.userService.addUserToLobby(userid, newlobby.id)
+        
         return {
             lobbyId: newlobby.id
+        }
+    }
+    getPartyMembers = async(userId :string) => {
+        const user = await prisma.users.findFirst({
+            where: {
+                id: userId
+            },
+            select: {
+                id: true,
+                partyLeader: {
+                    select: {
+                        members: {
+                            select: {
+                                id: true,
+                                steamID: true
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        return await user?.partyLeader?.members
+    }
+    leaveFromLobby = async(playerId: string,gameId: string)=> {
+        const lobby = await prisma.lobby.findFirst({
+            where: {
+                id: gameId
+            }
+        })
+        if(lobby) {
+            const user = await prisma.users.update({
+                where: {
+                    id: playerId
+                },
+                select: {
+                    id: true,
+                    partyLeader: {
+                        select: {
+                            members: true
+                        }
+                    }
+                },
+                data: {
+                    ctLobbies: {
+                        disconnect: {
+                            id: gameId
+                        }
+                    },
+                    tLobbies: {
+                        disconnect: {
+                            id: gameId
+                        }
+                    }
+                }
+            })
+            if(user.partyLeader?.members) {
+                const members = user.partyLeader.members
+                for(const user of members) {
+                    await prisma.users.update({
+                        where: {
+                            id: user.id
+                        },
+                        data: {
+                            ctLobbies: {
+                                disconnect: {
+                                    id: gameId
+                                }
+                            },
+                            tLobbies: {
+                                disconnect: {
+                                    id: gameId
+                                }
+                            }
+                        }
+                    })
+                }
+
+                const countLobbyCt = await prisma.users.count({
+                    where: {
+                        ctLobbies: {
+                            some: {
+                                id: gameId
+                            }
+                        },
+                        tLobbies: {
+                            some: {
+                                id: gameId
+                            }
+                        }
+                    }
+                });
+                if(countLobbyCt == 0) {
+                    await prisma.lobby.delete({
+                        where: {
+                            id: gameId
+                        }
+                    })
+                }
+
+            }
         }
     }
     getLobby = async (gameId: string) => {
@@ -36,13 +137,17 @@ export default class LobbyManager {
             },
             select: {
                 id: true,
+                
                 ctPlayers: {
                     select: {
+                        id: true,
                         steamID: true
                     }
                 },
                 tPlayers: {
                     select: {
+                        id: true,
+
                         steamID: true
                     }
                 },
@@ -74,7 +179,6 @@ export default class LobbyManager {
                             }
                         });
 
-                        console.log(`Count of CT players in lobby ${gameId}: ${countLobbyCt}`);
 
                         if (countLobbyCt < maxPlayersPerTeam) {
                             const isPlayerInLobby = await prisma.users.findFirst({
@@ -83,7 +187,7 @@ export default class LobbyManager {
                                         { id: playerId },
                                         {
                                             OR: [
-                                                { ctLobbies: { none: { id: gameId } } }, 
+                                                { ctLobbies: { none: { id: gameId } } },
                                                 { ctLobbies: { some: { finished: true } } } 
                                             ]
                                         }
@@ -92,6 +196,19 @@ export default class LobbyManager {
                             });
 
                             if (isPlayerInLobby) {
+                                const partymemebers = await prisma.users.findFirst({
+                                    where: {
+                                        id: playerId
+                                    },
+                                    select: {
+                                        id: true,
+                                        partyLeader: {
+                                            select: {
+                                                members: true
+                                            }
+                                        }
+                                    }
+                                })
                                 await prisma.users.update({
                                     where: {
                                         id: playerId
@@ -101,9 +218,40 @@ export default class LobbyManager {
                                             connect: {
                                                 id: gameId
                                             }
-                                        }
+                                        },
+                                        tLobbies: {
+                                            disconnect: {
+                                                id: gameId
+                                            }
+                                        },
                                     }
                                 });
+                                if(partymemebers?.partyLeader?.members) {
+                                    const members = partymemebers.partyLeader.members
+                                    countLobbyCt < maxPlayersPerTeam
+                                    if(countLobbyCt + members.length - 1 <= maxPlayersPerTeam) {
+                                        for(const user of members) {
+                                            await prisma.users.update({
+                                                where: {
+                                                    id: user.id
+                                                },
+                                                data: {
+                                                    ctLobbies: {
+                                                        connect: {
+                                                            id: gameId
+                                                        }
+                                                    },
+                                                    tLobbies: {
+                                                        disconnect: {
+                                                            id: gameId
+                                                        }
+                                                    },
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                                console.log(`Count of CT players in lobby ${gameId}: ${countLobbyCt}`);
 
                                 console.log("Player joined the CT lobby.");
                             } else {
@@ -124,60 +272,104 @@ export default class LobbyManager {
                     }
                 });
 
-                if (lobby?.mode === Mode.TWO_VS_TWO) {
-                    const countLobbyt = await prisma.users.count({
-                        where: {
-                            tLobbies: {
-                                some: {
-                                    id: gameId
-                                }
-                            }
-                        }
-                    });
-
-                    console.log(`Count of T players in lobby ${gameId}: ${countLobbyt}`);
-
-                    if (countLobbyt < 2) {
-                        const isPlayerInLobby = await prisma.users.findFirst({
+                if (lobby) {
+                    const maxPlayersPerTeam = lobby.mode === Mode.FIVE_VS_FIVE ? 5 : 2;
+                    {
+                        const countLobbyCt = await prisma.users.count({
                             where: {
-                                AND: [
-                                    { id: playerId },
-                                    {
-                                        OR: [
-                                            { tLobbies: { none: { id: gameId } } },
-                                            { tLobbies: { some: { finished: true } } }
-                                        ]
+                                tLobbies: {
+                                    some: {
+                                        id: gameId
                                     }
-                                ]
+                                }
                             }
                         });
 
-                        if (isPlayerInLobby) {
-                            await prisma.users.update({
+                        if (countLobbyCt < maxPlayersPerTeam) {
+                            const isPlayerInLobby = await prisma.users.findFirst({
                                 where: {
-                                    id: playerId
-                                },
-                                data: {
-                                    tLobbies: {
-                                        connect: {
-                                            id: gameId
+                                    AND: [
+                                        { id: playerId },
+                                        {
+                                            OR: [
+                                                { tLobbies: { none: { id: gameId } } }, 
+                                                { tLobbies: { some: { finished: true } } } 
+                                            ]
                                         }
-                                    }
+                                    ]
                                 }
                             });
 
-                            console.log("Player joined the T lobby.");
+                            if (isPlayerInLobby) {
+                                const partymemebers = await prisma.users.findFirst({
+                                    where: {
+                                        id: playerId
+                                    },
+                                    select: {
+                                        id: true,
+                                        partyLeader: {
+                                            select: {
+                                                members: true
+                                            }
+                                        }
+                                    }
+                                })
+                                await prisma.users.update({
+                                    where: {
+                                        id: playerId
+                                    },
+                                    data: {
+                                        tLobbies: {
+                                            connect: {
+                                                id: gameId
+                                            }
+                                        },
+                                        ctLobbies: {
+                                            disconnect: {
+                                                id: gameId
+                                            }
+                                        }
+                                    }
+                                });
+                                if(partymemebers?.partyLeader?.members) {
+                                    const members = partymemebers.partyLeader.members
+                                    countLobbyCt < maxPlayersPerTeam
+                                    if(countLobbyCt + members.length - 1 <= maxPlayersPerTeam) {
+                                        for(const user of members) {
+                                            await prisma.users.update({
+                                                where: {
+                                                    id: user.id
+                                                },
+                                                data: {
+                                                    ctLobbies: {
+                                                        connect: {
+                                                            id: gameId
+                                                        }
+                                                    },
+                                                    tLobbies: {
+                                                        disconnect: {
+                                                            id: gameId
+                                                        }
+                                                    },
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                                console.log("Player joined the CT lobby.");
+                                console.log(`Count of CT players in lobby ${gameId}: ${countLobbyCt}`);
+
+                            } else {
+                                console.log("Player is already in a lobby or in an unfinished CT lobby. Cannot join.");
+                            }
                         } else {
-                            console.log("Player is already in a lobby or in an unfinished T lobby. Cannot join.");
+                            console.log("CT Lobby is full. Cannot join.");
                         }
-                    } else {
-                        console.log("T Lobby is full. Cannot join.");
                     }
-                } else {
-                    console.log("Unsupported game mode.");
                 }
             } break;
         }
     };
+    
 
 }
