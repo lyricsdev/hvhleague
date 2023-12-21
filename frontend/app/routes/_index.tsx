@@ -74,7 +74,7 @@ export default function Index() {
       }
       {members && members.length < 5 &&
         Array.from({ length: 5 - members.length }).map((_, index) => (
-          <div key={index}><Avatar radius="none" src={test} /> </div>
+          <div key={index}><Avatar onClick={()=>{console.log("bruh")}} radius="none" src={test} /> </div>
         ))
       }
     </div>
