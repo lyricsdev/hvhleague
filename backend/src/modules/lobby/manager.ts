@@ -38,7 +38,8 @@ export default class LobbyManager {
                             select: {
                                 id: true,
                                 steamID: true,
-                                avatar: true
+                                avatar: true,
+                                status: true
                             }
                         }
                     }

@@ -15,7 +15,11 @@ model Party {
   leaderId String @unique
   members  users[] @relation("PartyMembers")
 }
-
+enum Status {
+  ONLINE
+  OFFLINE
+  INGAME
+}
 model users {
   id             String   @id @default(uuid())
   password       String
@@ -28,7 +32,7 @@ model users {
   leaderId       String?
   partyMember    Party?   @relation("PartyMembers", fields: [memberId], references: [id])
   memberId       String?
-
+  status Status  @default(OFFLINE)
   ctLobbies      Lobby[]  @relation("LobbyCTPlayers")
   tLobbies       Lobby[]  @relation("LobbyTPlayers")
 }

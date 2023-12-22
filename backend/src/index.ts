@@ -36,6 +36,8 @@ app.listen(getConfig().PORT, async () => {
         }
     })
     const test = false
+    console.log(test);
+
     if(test) {
         await prisma.users.update({
             where: {

@@ -1,11 +1,12 @@
 import { Spacer } from "@nextui-org/react"
 import LobbyPlayer from "./inLobbyPlayer"
 import SkeletonLobbyPlayer from "./inLobbyPlayerSkeleton"
-
+export type status =   "ONLINE" | "OFFLINE" | "INGAME"
 export interface Player {
     id: string
     steamID: string
     avatar: string | null
+    status : status
 }
 export interface map {
     id: string,

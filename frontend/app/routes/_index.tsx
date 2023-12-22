@@ -8,7 +8,7 @@ import { userContext } from "~/root";
 import { useContext } from "react";
 import { authenticator } from "~/api/auth";
 import { getUserSession } from "~/api/user";
-import { Player } from "~/components/teamcustom";
+import { Player, status } from "~/components/teamcustom";
 export const meta: MetaFunction = () => {
   return [
     { title: "New Remix App" },
@@ -50,6 +50,20 @@ export default function Index() {
   const { members } = useLoaderData<typeof loader>() as {
     members: Player[] | null
   }
+  const getColorStatus = (status : status )=> {
+    switch(status) {
+      case "ONLINE": {
+        return "success"
+      }
+      case "OFFLINE":
+        return "danger"
+      case "INGAME":
+        return "primary"
+      default: {
+        return "danger"
+      }
+    }
+  }
   return (
     <div className="flex gap-4 items-center">
       <Form method="post">
@@ -69,7 +83,7 @@ export default function Index() {
       <p>party members</p>
       {
         members && members.map((it) => {
-          return <Avatar radius="none" src={it.avatar ? it.avatar : ""} />
+          return <Avatar key={it.id} isBordered radius="none" color={getColorStatus(it.status)} src={it.avatar ? it.avatar : ""}></Avatar>
         })
       }
       {members && members.length < 5 &&

@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import lobbyManager from './../modules/lobby/manager';
 import { getConfig } from '../config/config';
 import prisma from "./../modules/prisma/prisma.client"
-import { Map } from '@prisma/client';
+import { Map, Status } from '@prisma/client';
 
 interface RankQueueItem {
     socket: Socket;
@@ -260,6 +260,26 @@ class SocketServer {
             console.log(`Server ${servername} disconnected.`);
         }
     }
+    private onUserJoin = async(id: string)=> {
+        await prisma.users.update({
+            where: {
+                id: id
+            },
+            data: {
+                status : Status.ONLINE
+            }
+        })
+    }
+    private onUserdisconnect = async(id: string)=> {
+        await prisma.users.update({
+            where: {
+                id: id
+            },
+            data: {
+                status : Status.OFFLINE
+            }
+        })
+    }
     private configure(): void {
 
         this.io.on('connection', (socket: Socket) => {
@@ -280,7 +300,9 @@ class SocketServer {
                             } break;
                         }
                     } else {
+                        
                         console.log('User authenticated:', decoded.steamid);
+                        this.onUserJoin(decoded.id)
                         socket.on("checkRoom", async (data: checkRoomI) => {
                             this.handleCheckRoom(data, socket)
 
@@ -288,11 +310,13 @@ class SocketServer {
                         socket.on("voteMap", async (data: voteMap) => {
                             await this.updateMapVotes(data.roomId, data.mapId, decoded.steamid);
                         });
+                        socket.on("disconnect", () => {
+                            this.onUserdisconnect(decoded.id)
+                            console.log(decoded.id + "user disconnected")
+                        });
                     }
                 });
             }
-            socket.disconnect(true);
-
             return
         });
     }
