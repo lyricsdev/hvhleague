@@ -100,7 +100,7 @@ export default class userService {
       success: true
     }
   }
-  leaveLobby = async(userId: string,gameId: string)=> {
+  leaveLobby = async (userId: string, gameId: string) => {
     const usr = await prisma.users.update({
       where: {
         id: userId
@@ -112,9 +112,9 @@ export default class userService {
           }
         },
         tLobbies: {
-            disconnect: {
-              id: gameId
-            }
+          disconnect: {
+            id: gameId
+          }
         }
       },
       select: {
@@ -127,7 +127,7 @@ export default class userService {
         }
       }
     })
-    if(usr.partyLeader?.members) {
+    if (usr.partyLeader?.members) {
       for (const users of usr.partyLeader.members) {
         await prisma.users.update({
           where: {
@@ -140,9 +140,9 @@ export default class userService {
               }
             },
             tLobbies: {
-                disconnect: {
-                  id: gameId
-                }
+              disconnect: {
+                id: gameId
+              }
             }
           },
         })
@@ -169,7 +169,7 @@ export default class userService {
         }
       }
     })
-    if(usr.partyLeader?.members) {
+    if (usr.partyLeader?.members) {
       for (const users of usr.partyLeader.members) {
         await prisma.users.update({
           where: {
@@ -303,8 +303,6 @@ export default class userService {
         })
         break;
     }
-
-
   }
 
 }

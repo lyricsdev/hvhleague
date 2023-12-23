@@ -1,15 +1,14 @@
-import { Spacer, Card, CardHeader, Avatar, CardBody, Image, Button } from "@nextui-org/react"
+import {Card, CardHeader, Avatar, CardBody, Image, Button } from "@nextui-org/react"
 import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node"
 import { Form, useLoaderData } from "@remix-run/react"
 import { useEffect, useState } from "react"
-import { Socket } from "socket.io-client"
 import { authenticator } from "~/api/auth"
 import { useAxios } from "~/api/fetcher"
+import { GameData, Player, map } from "~/api/interfaces"
 import { getUserSession } from "~/api/user"
-import ChatBox from "~/components/chatBox"
 import MapsList, { MapVotes } from "~/components/mapsList"
 import { useSocket } from "~/components/socket"
-import TeamLobby, { Data, Player, map } from "~/components/teamcustom"
+import TeamLobby from "~/components/teamcustom"
 
 export const loader: LoaderFunction = async ({ request, params }) => {
     let user = await authenticator.isAuthenticated(request, {
@@ -19,7 +18,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         let user = await getUserSession(request)
         console.log(user)
         const { id } = params
-        const data = await useAxios.get<Data>(`/games/${id}`)
+        const data = await useAxios.get<GameData>(`/games/${id}`)
         console.log(data)
         if(data)
         return {
@@ -58,7 +57,7 @@ export const action: ActionFunction = async ({ request, context }) => {
 const gameTab = () => {
     const socket = useSocket()
     const { game, gameId, playerId } = useLoaderData<typeof loader>() as {
-        game: Data,
+        game: GameData,
         gameId: string,
         playerId: string,
     }
@@ -112,7 +111,7 @@ const gameTab = () => {
         }
     }
     return (
-        <div className="h-screen flex items-center justify-center bg-gray-100">
+        <div className="flex items-center justify-center bg-gray-100 h-screen">
             <div className="flex hstack">
                 <TeamLobby gameId={gameId} side={'t side'} mode={game.mode} players={tplayers} />
                 {

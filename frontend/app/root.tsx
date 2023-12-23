@@ -17,6 +17,8 @@ import { useState, useEffect, createContext } from "react";
 import { Socket, io } from "socket.io-client";
 import { SocketProvider } from "./components/socket";
 import { getUserSession, ret, user } from "./api/user";
+import { useAxios } from "./api/fetcher";
+import { Player } from "./api/interfaces";
 
 export const userContext = createContext<user | undefined>(undefined)
 
@@ -25,10 +27,19 @@ export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
 
 ];
+
 export const loader: LoaderFunction = async ({ request, params }) => {
   const url = process.env.WEBSOCKETURL
   let data = await getUserSession(request)
-
+  if(data?.user) {
+    const members = await useAxios.post<Player[] | null>("/games/partymembers", {})
+    console.log(members)
+    return {
+      members,
+      url,
+      User: data
+    }
+  }
   return {
     url,
     User: data
@@ -36,8 +47,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 }
 export default function App() {
   const [socket, setSocket] = useState<Socket>();
-  const {url,User} = useLoaderData<typeof loader>() as {
+  const {url,User,members} = useLoaderData<typeof loader>() as {
     url: string,
+    members: Player[],
     User: ret | null,
   }
   useEffect(() => {
@@ -71,7 +83,7 @@ export default function App() {
       <div className="dark text-foreground bg-background">
       <userContext.Provider value={User?.user}>
 
-        <Layout >
+        <Layout user={User?.user} members={members} >
 
         <SocketProvider socket={socket}>
           <Outlet />

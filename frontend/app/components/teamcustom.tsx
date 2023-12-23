@@ -1,31 +1,8 @@
 import { Spacer } from "@nextui-org/react"
 import LobbyPlayer from "./inLobbyPlayer"
 import SkeletonLobbyPlayer from "./inLobbyPlayerSkeleton"
-export type status =   "ONLINE" | "OFFLINE" | "INGAME"
-export interface Player {
-    id: string
-    steamID: string
-    avatar: string | null
-    status : status
-}
-export interface map {
-    id: string,
-    name: string,
-    imageUrl:string
-}
-export interface Data {
-    id: string,
-    ctPlayers: Player[],
-    tPlayers: Player[]
-    mode: string
-    map: map
-}
-interface propTeam  {
-    players : Player[],
-    side: string,
-    gameId: string,
-    mode: string
-}
+import { propTeam } from "~/api/interfaces"
+
 const TeamLobby: React.FC<propTeam> = ({players,side,gameId,mode }) => {
     const moding = ()=> {
         switch(mode) {

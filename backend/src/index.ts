@@ -15,43 +15,11 @@ import http from 'http';
 
 import SocketServer from './sockets/sockets'
 import { LobbyController } from "./modules/lobby/lobby.controller";
-import prisma from "./modules/prisma/prisma.client";
 const app: Express = express();
 const server = http.createServer(app);
 
 app.listen(getConfig().PORT, async () => {
     console.log("core succesfully start at", getConfig().PORT);
-    const usr = await prisma.users.findFirst({
-        where: {
-            id: "5b4f288e-629a-4638-8442-0614f88b08b9"
-        },
-        select: {
-            id: true,
-            partyLeader: {
-                select: {
-                    id: true,
-                    members: true
-                }
-            }
-        }
-    })
-    const test = false
-    console.log(test);
-
-    if(test) {
-        await prisma.users.update({
-            where: {
-                id: "5b4f288e-629a"
-            },
-            data: {
-                partyMember: {
-                    connect: {
-                        id: usr?.partyLeader?.id
-                    }
-                }
-            }
-        })
-    }
 });
 const socketServer = new SocketServer(server);
 server.listen(getConfig().WEBSOCKETSPORT, () => {
