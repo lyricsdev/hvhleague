@@ -116,6 +116,7 @@ export default class LobbyManager {
                         ctPlayers: true
                     }
                 });
+
                 if(lobbyPlayers) {
                     const count = lobbyPlayers?.ctPlayers.length + lobbyPlayers?.tPlayers.length
                     if(count <= 0) {
@@ -136,7 +137,6 @@ export default class LobbyManager {
             },
             select: {
                 id: true,
-                
                 ctPlayers: {
                     select: {
                         id: true,
@@ -158,6 +158,7 @@ export default class LobbyManager {
         })
     }
     joinTeam = async (gameId: string, playerId: string, side: "t side" | "ct side") => {
+      
         switch (side) {
             case 'ct side': {
                 const lobby = await prisma.lobby.findUnique({
@@ -412,6 +413,4 @@ export default class LobbyManager {
             } break;
         }
     };
-    
-
 }

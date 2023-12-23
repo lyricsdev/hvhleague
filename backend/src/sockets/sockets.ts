@@ -7,11 +7,6 @@ import { getConfig } from '../config/config';
 import prisma from "./../modules/prisma/prisma.client"
 import { Map, Status } from '@prisma/client';
 
-interface RankQueueItem {
-    socket: Socket;
-    rank: number;
-    steamid: string;
-}
 
 interface checkRoomI {
     playerId: string
@@ -290,7 +285,6 @@ class SocketServer {
                     if (err) {
                         console.log('Invalid JWT token.');
                         socket.disconnect(true);
-
                         return;
                     }
                     if (decoded.type) {

@@ -6,6 +6,7 @@ import { generateRandomPassword, hashPassword } from "../../utils/password";
 export default class userService {
   createUserSteam = async (register: registerDto) => {
     const user = await this.findUserBySteamId(register.steamid)
+
     if (!user) {
       const password = generateRandomPassword(10)
       await prisma.users.create({
@@ -14,6 +15,7 @@ export default class userService {
           password: await hashPassword(password)
         }
       })
+
       const usr = await this.findUserBySteamId(register.steamid)
       return usr
     }
@@ -304,5 +306,4 @@ export default class userService {
         break;
     }
   }
-
 }

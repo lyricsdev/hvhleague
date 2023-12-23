@@ -6,13 +6,11 @@ import {
     useExpressServer,
 } from "routing-controllers";
 import jwt from "jsonwebtoken";
-
 import { getConfig } from './config/config'
 import { ErrorHandler } from "./middleware/errorHandler";
 import { authController } from "./modules/auth/auth.controller";
 import { Server } from 'socket.io';
 import http from 'http';
-
 import SocketServer from './sockets/sockets'
 import { LobbyController } from "./modules/lobby/lobby.controller";
 const app: Express = express();
